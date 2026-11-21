@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f8a42">
+<title>Social President</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --green:#0f8a42;
+  --green-dark:#0a6b32;
+  --green-soft:#e6f7ed;
+  --green-glow:#0f8a4222;
+  --white:#ffffff;
+  --ink:#14201a;
+  --muted:#6b7a71;
+  --line:#e2ece5;
+  --bg:#f3f8f5;
+  --card-shadow:0 8px 28px rgba(15,60,30,.08);
+  --radius:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+html,body{min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(180deg,#f7fbf8 0%,#f0f6f2 100%)}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;background:none}
+img,video{max-width:100%}
+
+/* Header */
+header{height:68px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(14px,calc((100vw - 720px)/2));position:sticky;top:0;z-index:40;box-shadow:0 2px 16px rgba(15,60,30,.06)}
+.brand-wrap{display:flex;flex-direction:column;justify-content:center;line-height:1.1}
+.brand{font-size:20px;font-weight:900;letter-spacing:.6px;color:var(--green);background:linear-gradient(135deg,#0f8a42,#0a6b32);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand-byline{font-size:10px;font-weight:600;color:var(--muted);margin-top:3px;letter-spacing:.2px}
+.head-actions{display:flex;gap:8px}
+.head-actions button{width:40px;height:40px;border-radius:14px;background:var(--green-soft);color:var(--green);font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s}
+.head-actions button:active{transform:scale(.94)}
+
+/* Main layout */
+main{max-width:720px;margin:0 auto;padding:16px 12px 110px}
+.page{display:none}.page.active{display:block}
+.page>h2,.page .row>h2{font-size:22px;font-weight:800;letter-spacing:-.4px;color:#153525;margin-bottom:14px}
+
+/* Cards */
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--card-shadow);transition:transform .2s,box-shadow .2s}
+.card:active{transform:scale(.995)}
+@media(prefers-reduced-motion:no-preference){.card{animation:spIn .28s ease both}@keyframes spIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}
+
+/* Typography helpers */
+.muted{color:var(--muted);font-size:13px}
+.row{display:flex;align-items:center;gap:10px}.between{justify-content:space-between}
+
+/* Avatar */
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e8f0eb;flex-shrink:0;border:2px solid #f0f5f2}
+
+/* Form controls */
+input,textarea,select{width:100%;padding:14px 15px;margin:7px 0;border:1.5px solid var(--line);border-radius:14px;background:#fafdfb;color:var(--ink);outline:none;transition:border .2s,box-shadow .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-glow)}
+textarea{min-height:90px;resize:vertical}
+
+/* Buttons */
+.btn{padding:12px 18px;border-radius:14px;font-weight:700;font-size:15px;transition:transform .15s,box-shadow .15s,background .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.97)}
+.primary{background:linear-gradient(135deg,#12a04c,#0a6b32);color:#fff;box-shadow:0 6px 16px rgba(15,138,66,.28)}
+.primary:active{box-shadow:0 3px 10px rgba(15,138,66,.2)}
+.soft{background:var(--green-soft);color:var(--green-dark)}
+.plain{background:transparent;color:var(--muted)}
+.danger{background:#ffe9ec;color:#c62845}
+
+/* Bottom nav */
+.bottom{position:fixed;bottom:0;left:0;right:0;z-index:45;background:rgba(255,255,255,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(15,60,30,.06)}
+.bottom button{background:none;color:#8a9690;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:56px;transition:color .15s}
+.bottom button b{font-size:22px;line-height:1}
+.bottom button.active{color:var(--green)}
+
+/* Auth */
+.auth{max-width:420px;margin:6vh auto;padding:16px}
+.auth .card{border-radius:26px;padding:28px 24px;box-shadow:0 16px 48px rgba(15,60,30,.1)}
+.auth .brand{font-size:28px!important}
+
+/* Posts */
+.post-media{display:block;width:100%;max-height:520px;object-fit:contain;background:#0d1a12;border-radius:16px;margin-top:12px}
+.post-actions{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid #eef3f0}
+.action{background:none;color:#4a5a52;padding:6px 4px;font-size:14px;font-weight:650;border-radius:10px;transition:color .15s,background .15s}
+.action:active{background:#f0f5f2}
+.action.liked{color:var(--green);font-weight:800}
+.stat-pill{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+
+/* Profile */
+.profile-card{text-align:center;overflow:hidden;padding:0 0 22px;border-radius:24px}
+.banner{height:150px;background:linear-gradient(130deg,#b5e8c8,#e8fff0 50%,#c8f0d6);background-position:center;background-size:cover}
+.profile-main{padding:0 18px}
+.profile-avatar{width:108px;height:108px;border:4px solid #fff;margin-top:-54px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.stats{display:flex;justify-content:center;gap:28px;margin:18px 0}
+.stat-button{background:none;color:var(--ink);min-width:72px;font-size:14px;line-height:1.4}
+.stat-button strong{display:block;font-size:20px;font-weight:800}
+.profile-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.grid-tile{position:relative;aspect-ratio:1;background:#dde8e1;overflow:hidden;cursor:pointer;border-radius:8px}
+.grid-tile img,.grid-tile video{width:100%;height:100%;object-fit:cover;display:block}
+.grid-tile .tile-play{position:absolute;right:6px;top:6px;color:#fff;text-shadow:0 1px 6px #000;font-size:18px}
+
+/* Lists & items */
+.item{padding:13px 0;border-bottom:1px solid #eef3f0}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal-box{background:#fff;width:100%;max-width:440px;max-height:88vh;overflow:auto;padding:22px;border-radius:22px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+
+/* Custom dialog */
+#spDialog{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:20px}
+#spDialog.show{display:flex}
+.sp-dialog-box{width:100%;max-width:520px;min-height:200px;background:#fff;border-radius:20px;padding:26px 24px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.sp-dialog-title,.sp-dialog-says{font-weight:900;text-align:center;color:#111;text-shadow:-2px -2px 0 #c8ff4a,2px -2px 0 #c8ff4a,-2px 2px 0 #c8ff4a,2px 2px 0 #c8ff4a;-webkit-text-stroke:1px #111}
+.sp-dialog-title{font-size:26px;margin-bottom:4px}
+.sp-dialog-says{font-size:38px;margin:0 0 18px}
+.sp-dialog-message{font-size:18px;font-weight:700;text-align:center;line-height:1.45;color:#222;white-space:pre-wrap;overflow-wrap:anywhere}
+.sp-dialog-input{border:2px solid var(--green);padding:13px;border-radius:12px;margin-top:16px;display:none;width:100%}
+.sp-dialog-buttons{display:flex;justify-content:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.sp-dialog-buttons button{padding:12px 28px;border-radius:12px;font-weight:700;background:var(--green);color:#fff}
+.sp-dialog-buttons .cancel{background:#e9eee9;color:#333}
+
+/* Watch page */
+#watch.page.active{display:block}
+.watch-video-wrap{background:#000;margin:-16px -12px 14px;position:relative;border-radius:0 0 18px 18px;overflow:hidden}
+.watch-video{width:100%;max-height:58vh;display:block;background:#000;object-fit:contain}
+.channel-row{display:flex;align-items:center;gap:12px;margin:14px 0}
+.channel-row .channel-name{flex:1;min-width:0}
+.watch-actions{display:flex;justify-content:space-around;gap:6px;padding:12px 0;flex-wrap:wrap}
+.watch-actions button{background:#edf7f0;border-radius:14px;padding:11px 14px;color:#1a2e22;font-weight:700;font-size:14px}
+.watch-actions button.liked{color:var(--green)}
+.comment-box{background:#f4f9f6;border-radius:16px;padding:14px;margin:14px 0}
+.recommend{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #eef3f0;cursor:pointer}
+.recommend img{width:128px;height:76px;object-fit:cover;border-radius:10px;background:#dde8e1}
+.recommend .rec-text{font-size:14px;line-height:1.35}
+.recommend .rec-text small{display:block;color:var(--muted);margin-top:4px}
+
+/* Shorts */
+#shorts.page.active{position:fixed;inset:68px 0 64px;z-index:25;background:#000;padding:0}
+#shortsScroller{height:100%;width:100%;overflow-y:auto;scroll-snap-type:y mandatory;background:#000;-webkit-overflow-scrolling:touch}
+.short-card{height:100%;min-height:100%;width:100%;position:relative;scroll-snap-align:start;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.short-card video{width:100%;height:100%;object-fit:contain;background:#000}
+.short-caption{position:absolute;bottom:28px;left:16px;right:90px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.7);z-index:3;pointer-events:none}
+.short-caption h3{font-size:18px;margin:5px 0;font-weight:800}
+.short-caption p{margin:3px 0;font-size:14px;opacity:.95}
+.short-rail{position:absolute;right:12px;bottom:40px;display:flex;flex-direction:column;align-items:center;gap:10px;color:#fff;z-index:4}
+.short-rail button{background:rgba(255,255,255,.22);color:#fff;border-radius:50%;width:48px;height:48px;font-size:20px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:background .15s,transform .15s}
+.short-rail button:active{transform:scale(.92)}
+.short-rail button.liked{background:#fff;color:var(--green)}
+.short-rail small{font-size:12px;text-shadow:0 2px 6px #000;margin-bottom:2px;font-weight:600}
+#shortsScroller::-webkit-scrollbar{display:none}
+
+/* Connections */
+.connection-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.back-button{width:40px;height:40px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:22px;display:flex;align-items:center;justify-content:center}
+.user-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #eef3f0}
+.user-row-info{flex:1;min-width:0}
+.user-row-info b{display:block}
+.user-row-info small{color:var(--muted)}
+
+/* Status + progress */
+#statusLine{font-size:13px;color:var(--green);font-weight:650;min-height:20px;padding:4px 0;transition:opacity .3s}
+.upload-progress{margin:12px 0 4px;display:none}
+.upload-progress.show{display:block}
+.progress-bar{height:8px;background:#e2ece5;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#12a04c,#0f8a42);border-radius:99px;transition:width .2s ease}
+.progress-text{font-size:12px;color:var(--muted);margin-top:6px;text-align:center;font-weight:600}
+
+/* Empty states */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state b{display:block;font-size:18px;color:#2a3d32;margin-bottom:6px}
+
+@media(min-width:760px){
+  #shorts.page.active{left:calc(50% - 360px);right:auto;width:720px}
+  .short-card{max-width:720px;margin:auto}
+  main{padding-top:20px}
+  .auth{margin-top:8vh}
+}
+</style>
+</head>
+<body>
+<header id="appHeader" style="display:none">
+  <div class="brand-wrap">
+    <div class="brand">SOCIAL PRESIDENT</div>
+    <div class="brand-byline">By Sayyid Muhammed Anfal</div>
+  </div>
+  <div class="head-actions">
+    <button aria-label="Refresh" title="Refresh" onclick="refreshApp()">↻</button>
+    <button onclick="go('search')">⌕</button>
+    <button onclick="go('notifications')">♧</button>
+    <button onclick="go('messages')">✉</button>
+  </div>
+</header>
+
+<section id="auth" class="auth">
+  <div class="card">
+    <div class="brand" style="font-size:28px;text-align:center">SOCIAL PRESIDENT</div>
+    <p class="brand-byline" style="font-size:12px;margin:6px 0 22px;text-align:center">By Sayyid Muhammed Anfal</p>
+    <div id="loginForm">
+      <h2 style="margin-bottom:12px">Welcome back</h2>
+      <input id="loginUser" placeholder="Username" autocomplete="username">
+      <input id="loginPass" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="login()">Login</button>
+      <p class="muted" style="margin-top:16px;text-align:center">New here? <a href="#" onclick="toggleAuth();return false" style="color:var(--green);font-weight:700">Create account</a></p>
+    </div>
+    <div id="signupForm" style="display:none">
+      <h2 style="margin-bottom:12px">Create account</h2>
+      <input id="regName" placeholder="Full name">
+      <input id="regUser" placeholder="Unique username">
+      <input id="regPass" type="password" placeholder="Password" autocomplete="new-password">
+      <button class="btn primary" style="width:100%;margin-top:8px" onclick="signup()">Create account</button>
+      <p class="muted" style="margin-top:16px;text-align:center">Already registered? <a href="#" onclick="toggleAuth();return false" style="color:var(--green);font-weight:700">Login</a></p>
+    </div>
+    <div id="statusLine">Connect to Social President</div>
+  </div>
+</section>
+
+<div id="app" style="display:none">
+<main>
+  <section id="home" class="page active">
+    <div class="row between">
+      <h2>Home</h2>
+      <button class="btn primary" onclick="go('create')">＋ Create</button>
+    </div>
+    <div id="feed"></div>
+  </section>
+
+  <section id="explore" class="page">
+    <h2>Explore</h2>
+    <input id="exploreQuery" placeholder="Search videos, posts or hashtags" oninput="renderExplore()">
+    <div id="exploreResults"></div>
+  </section>
+
+  <section id="create" class="page">
+    <div class="card">
+      <h2>Create</h2>
+      <select id="uploadType" onchange="updateFilePicker()">
+        <option value="post">Photo Post</option>
+        <option value="video">Video</option>
+        <option value="short">Shorts</option>
+      </select>
+      <input id="uploadTitle" placeholder="Title">
+      <textarea id="uploadDesc" placeholder="Description"></textarea>
+      <input id="uploadTags" placeholder="#hashtags">
+      <label class="muted" style="display:block;margin-top:8px">Select media</label>
+      <input id="uploadFile" type="file" accept="image/*">
+      <label class="muted" style="display:block;margin-top:6px">Custom thumbnail (optional)</label>
+      <input id="uploadThumb" type="file" accept="image/*">
+      <div class="upload-progress" id="uploadProgress">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">0%</div>
+      </div>
+      <button class="btn primary" id="publishBtn" style="width:100%;margin-top:12px" onclick="publish()">Publish</button>
+    </div>
+  </section>
+
+  <section id="shorts" class="page">
+    <div id="shortsScroller"></div>
+  </section>
+
+  <section id="profile" class="page">
+    <div class="card profile-card">
+      <div class="banner" id="myBanner"></div>
+      <div class="profile-main">
+        <img id="myAvatar" class="avatar profile-avatar">
+        <h2 id="myName" style="margin:8px 0 3px"></h2>
+        <p class="muted" id="myHandle"></p>
+        <p id="myBio" style="margin-top:6px"></p>
+        <div class="stats">
+          <div><strong id="postCount">0</strong>Posts</div>
+          <button class="stat-button" onclick="openConnections(current.id,'followers')"><strong id="followerCount">0</strong>Followers</button>
+          <button class="stat-button" onclick="openConnections(current.id,'following')"><strong id="followingCount">0</strong>Following</button>
+        </div>
+        <div class="profile-buttons">
+          <button class="btn soft" onclick="go('editProfile')">Edit Profile</button>
+          <button class="btn soft" onclick="go('creator')">Creator Studio</button>
+          <button class="btn soft" onclick="go('settings')">Settings</button>
+        </div>
+      </div>
+    </div>
+    <h2 style="font-size:20px;margin:18px 0 10px">My Posts</h2>
+    <div id="myGrid" class="grid"></div>
+  </section>
+
+  <section id="editProfile" class="page">
+    <div class="card">
+      <h2>Edit profile</h2>
+      <input id="editName" placeholder="Name">
+      <input id="editUsername" placeholder="Username">
+      <textarea id="editBio" placeholder="Bio"></textarea>
+      <label class="muted" style="display:block;margin-top:6px">Profile photo</label>
+      <input id="editAvatar" type="file" accept="image/*">
+      <label class="muted" style="display:block;margin-top:6px">Profile banner</label>
+      <input id="editBanner" type="file" accept="image/*">
+      <button class="btn primary" style="width:100%;margin-top:10px" onclick="saveProfile()">Save changes</button>
+    </div>
+  </section>
+
+  <section id="watch" class="page">
+    <div class="watch-video-wrap" id="watchVideoWrap"></div>
+    <h2 id="watchTitle"></h2>
+    <p class="muted" id="watchMeta"></p>
+    <div class="channel-row">
+      <img id="watchAvatar" class="avatar">
+      <div class="channel-name">
+        <b id="watchName"></b>
+        <p class="muted" id="watchHandle"></p>
+      </div>
+      <button id="watchFollow" class="btn primary" onclick="toggleWatchFollow()">Follow</button>
+    </div>
+    <div class="watch-actions">
+      <button id="watchLike" onclick="likeFromWatch()">👍 <span id="watchLikeCount">0</span></button>
+      <button onclick="openComments(watchingId)">💬 Comments</button>
+      <button onclick="share(watchingId)">↗ Share</button>
+      <button onclick="save(watchingId)">▣ Save</button>
+      <button onclick="watchMenu()">•••</button>
+    </div>
+    <div class="comment-box">
+      <b>Comments <span id="watchCommentCount">0</span></b>
+      <div id="watchCommentPreview" class="muted" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:10px">
+        <input id="watchCommentInput" placeholder="Add a comment..." style="margin:0">
+        <button class="btn primary" onclick="commentFromWatch()">Post</button>
+      </div>
+    </div>
+    <h3 style="margin:16px 0 8px">More videos</h3>
+    <div id="recommendations"></div>
+  </section>
+
+  <section id="creator" class="page">
+    <h2>Creator Studio</h2>
+    <div class="card">
+      <div class="stats">
+        <div><strong id="creatorViews">0</strong>Views</div>
+        <div><strong id="creatorLikes">0</strong>Likes</div>
+        <div><strong id="creatorComments">0</strong>Comments</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Your uploads</h3>
+      <div id="creatorList"></div>
+    </div>
+  </section>
+
+  <section id="search" class="page">
+    <h2>Search users</h2>
+    <input id="userQuery" placeholder="Search username or name" oninput="renderUsers()">
+    <div id="userResults"></div>
+  </section>
+
+  <section id="otherProfile" class="page">
+    <div id="otherProfileContent"></div>
+  </section>
+
+  <section id="connections" class="page">
+    <div class="connection-heading">
+      <button class="back-button" onclick="backFromConnections()">‹</button>
+      <div>
+        <h2 id="connectionsTitle" style="margin:0">Followers</h2>
+        <small class="muted" id="connectionsSubtitle"></small>
+      </div>
+    </div>
+    <div id="connectionsList"></div>
+  </section>
+
+  <section id="notifications" class="page">
+    <h2>Notifications</h2>
+    <div id="notificationList"></div>
+  </section>
+
+  <section id="messages" class="page">
+    <h2>Messages</h2>
+    <div id="messageUsers"></div>
+    <div id="chatBox" class="card" style="display:none">
+      <h3 id="chatTitle"></h3>
+      <div id="chatMessages"></div>
+      <div class="row" style="margin-top:10px">
+        <input id="chatText" placeholder="Message" style="margin:0">
+        <button class="btn primary" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="settings" class="page">
+    <h2>Settings</h2>
+    <div class="card">
+      <button class="btn soft" style="width:100%;margin:4px 0" onclick="go('history')">Watch history</button>
+      <button class="btn soft" style="width:100%;margin:4px 0" onclick="go('liked')">Liked content</button>
+      <button class="btn soft" style="width:100%;margin:4px 0" onclick="go('saved')">Saved content</button>
+      <button class="btn danger" style="width:100%;margin-top:16px" onclick="logout()">Log out</button>
+    </div>
+  </section>
+
+  <section id="history" class="page"><h2>Watch history</h2><div id="historyList"></div></section>
+  <section id="liked" class="page"><h2>Liked content</h2><div id="likedList"></div></section>
+  <section id="saved" class="page"><h2>Saved content</h2><div id="savedList"></div></section>
+</main>
+
+<nav class="bottom">
+  <button class="active" data-page="home" onclick="go('home',this)"><b>⌂</b>Home</button>
+  <button data-page="explore" onclick="go('explore',this)"><b>⌕</b>Explore</button>
+  <button data-page="create" onclick="go('create',this)"><b>＋</b>Create</button>
+  <button data-page="shorts" onclick="go('shorts',this)"><b>▷</b>Shorts</button>
+  <button data-page="profile" onclick="go('profile',this)"><b>◉</b>Profile</button>
+</nav>
+</div>
+
+<div id="commentsModal" class="modal">
+  <div class="modal-box">
+    <div class="row between">
+      <h2>Comments</h2>
+      <button class="btn soft" onclick="closeComments()">✕</button>
+    </div>
+    <div id="commentsList"></div>
+    <input id="commentInput" placeholder="Write a comment">
+    <button class="btn primary" style="width:100%;margin-top:8px" onclick="sendComment()">Post comment</button>
+  </div>
+</div>
+
+<div id="spDialog">
+  <div class="sp-dialog-box">
+    <div class="sp-dialog-title">Social President</div>
+    <div class="sp-dialog-says">Says</div>
+    <div id="spDialogMessage" class="sp-dialog-message"></div>
+    <input id="spDialogInput" class="sp-dialog-input">
+    <div id="spDialogButtons" class="sp-dialog-buttons"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* Browser-safe project credentials only. Never use service_role keys here. */
+const SUPABASE_URL = 'https://hlyqseotgvgwigmbehpe.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_zYl_nofIj8miO2Z2s1dgvA_GM123vwd';
+const BUCKET = 'sp-media';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = id => document.getElementById(id);
+const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const syntheticEmail = username => `${username}@users.socialpresident.invalid`;
+
+let current = null, profiles = [], posts = [], watchingId = null, commentTarget = null, activeChat = null;
+let connectionUserId = null, connectionType = 'followers', connectionReturn = 'profile';
+let shortObserver = null, liveChannels = [];
+let audioUnlocked = false;
+
+/* ---------- Helpers ---------- */
+function msg(e, fallback = 'Something went wrong.') {
+  console.error(e);
+  const m = e?.message || fallback;
+  // Never show raw permission / table names to users
+  if (/permission denied|row-level security|violates|policy/i.test(m)) {
+    return 'Action not allowed. Please try again or contact support.';
+  }
+  if (/jwt|token|auth/i.test(m)) return 'Session expired. Please log in again.';
+  return m;
+}
+function publicUrl(path) {
+  if (!path) return '';
+  return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+function fileExt(file) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return ext || 'jpg';
+}
+function storagePath(file, folder) {
+  return `${current.id}/${folder}/${crypto.randomUUID()}.${fileExt(file)}`;
+}
+function profile(id) { return profiles.find(x => x.id === id); }
+function post(id) { return posts.find(x => x.id === id && !x.deleted); }
+function visiblePosts() { return posts.filter(p => !p.deleted); }
+function mediaURL(p) { return publicUrl(p.media_path); }
+function thumbURL(p) { return publicUrl(p.thumbnail_path || (p.post_type === 'post' ? p.media_path : null)); }
+function liked(p) { return !!p.my_liked; }
+function counts(p) { return { likes: p.likes_count || 0, comments: p.comments_count || 0, views: p.views_count || 0 }; }
+
+/* ---------- Dialog ---------- */
+function dialog(message, type = 'alert', initial = '') {
+  return new Promise(resolve => {
+    const box = $('spDialog'), input = $('spDialogInput'), buttons = $('spDialogButtons');
+    $('spDialogMessage').textContent = String(message);
+    input.style.display = type === 'prompt' ? 'block' : 'none';
+    input.value = initial || '';
+    buttons.innerHTML = '';
+    const close = v => { box.classList.remove('show'); resolve(v); };
+    if (type === 'alert') {
+      const b = document.createElement('button');
+      b.textContent = 'OK';
+      b.onclick = () => close(true);
+      buttons.append(b);
+    } else {
+      const c = document.createElement('button');
+      c.textContent = 'Cancel';
+      c.className = 'cancel';
+      c.onclick = () => close(type === 'confirm' ? false : null);
+      const b = document.createElement('button');
+      b.textContent = 'OK';
+      b.onclick = () => close(type === 'confirm' ? true : input.value);
+      buttons.append(c, b);
+    }
+    box.classList.add('show');
+    if (type === 'prompt') setTimeout(() => input.focus(), 80);
+  });
+}
+window.alert = m => dialog(m, 'alert');
+const askConfirm = m => dialog(m, 'confirm');
+const askPrompt = (m, v = '') => dialog(m, 'prompt', v);
+
+/* ---------- Auth ---------- */
+function toggleAuth() {
+  const a = $('loginForm'), b = $('signupForm');
+  a.style.display = a.style.display === 'none' ? 'block' : 'none';
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+function setStatus(t) { $('statusLine').textContent = t || ''; }
+
+async function signup() {
+  const name = $('regName').value.trim();
+  const username = $('regUser').value.trim().toLowerCase();
+  const password = $('regPass').value;
+  if (!name || !username || !password) return alert('Please fill in every field.');
+  if (!/^[a-z0-9_.]{3,20}$/.test(username)) return alert('Username must be 3–20 characters (a-z, 0-9, _ or .).');
+  if (password.length < 6) return alert('Password must be at least 6 characters.');
+  setStatus('Creating your account…');
+  try {
+    const { data, error } = await sb.auth.signUp({
+      email: syntheticEmail(username),
+      password,
+      options: { data: { username, full_name: name } }
+    });
+    if (error) throw error;
+    if (!data.session) {
+      setStatus('Account created. Please log in.');
+      return alert('Account created successfully. Please log in.');
+    }
+    current = data.user;
+    await loadApp();
+    alert('Welcome to Social President!');
+  } catch (e) {
+    setStatus(msg(e));
+    alert(msg(e, 'Could not create account.'));
+  }
+}
+
+async function login() {
+  const username = $('loginUser').value.trim().toLowerCase();
+  const password = $('loginPass').value;
+  if (!username || !password) return alert('Enter username and password.');
+  setStatus('Signing in…');
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: syntheticEmail(username),
+      password
+    });
+    if (error) throw error;
+    current = data.user;
+    await loadApp();
+  } catch (e) {
+    setStatus(msg(e));
+    alert('Login failed. Check username and password.');
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  current = null;
+  stopRealtime();
+  pauseAllShorts();
+  $('app').style.display = 'none';
+  $('appHeader').style.display = 'none';
+  $('auth').style.display = 'block';
+  setStatus('You are logged out.');
+}
+
+/* ---------- Data loading ---------- */
+async function loadProfileData() {
+  const { data, error } = await sb.from('profiles').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  profiles = data || [];
+
+  try {
+    const { data: followData, error: fe } = await sb.from('follows').select('follower_id,following_id');
+    if (fe) {
+      // Graceful fallback if follows table has permission issues
+      console.warn('Follows load warning:', fe);
+      profiles.forEach(p => {
+        p.my_following_list = p.my_following_list || [];
+        p.is_followed_by_me_list = p.is_followed_by_me_list || [];
+      });
+    } else {
+      profiles.forEach(p => {
+        p.my_following_list = (followData || []).filter(f => f.follower_id === current.id).map(f => f.following_id);
+        p.is_followed_by_me_list = (followData || []).filter(f => f.following_id === p.id).map(f => f.follower_id);
+      });
+    }
+  } catch (e) {
+    console.warn('Follows unavailable:', e);
+    profiles.forEach(p => {
+      p.my_following_list = [];
+      p.is_followed_by_me_list = [];
+    });
+  }
+}
+
+async function loadPosts() {
+  const { data, error } = await sb.from('posts')
+    .select('*')
+    .or(`deleted.eq.false,user_id.eq.${current.id}`)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  posts = data || [];
+
+  const ids = posts.map(p => p.id);
+  if (!ids.length) return;
+
+  const [likes, comments, views, mine] = await Promise.all([
+    sb.from('likes').select('post_id,user_id').in('post_id', ids),
+    sb.from('comments').select('post_id').in('post_id', ids),
+    sb.from('post_views').select('post_id').in('post_id', ids),
+    sb.from('likes').select('post_id').eq('user_id', current.id).in('post_id', ids)
+  ]);
+
+  for (const r of [likes, comments, views, mine]) {
+    if (r.error) console.warn(r.error);
+  }
+
+  posts.forEach(p => {
+    p.likes_count = (likes.data || []).filter(x => x.post_id === p.id).length;
+    p.comments_count = (comments.data || []).filter(x => x.post_id === p.id).length;
+    p.views_count = (views.data || []).filter(x => x.post_id === p.id).length;
+    p.my_liked = (mine.data || []).some(x => x.post_id === p.id);
+  });
+}
+
+let refreshPromise = null;
+async function reloadAll() {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = (async () => {
+    await loadProfileData();
+    await loadPosts();
+  })();
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
+}
+
+async function refreshApp() {
+  if (!current) return;
+  setStatus('Refreshing…');
+  try {
+    await reloadAll();
+    refreshCurrentPage();
+    setStatus('Updated');
+    setTimeout(() => setStatus(''), 1800);
+  } catch (e) {
+    setStatus(msg(e, 'Could not refresh.'));
+  }
+}
+
+async function loadApp() {
+  $('auth').style.display = 'none';
+  $('appHeader').style.display = 'flex';
+  $('app').style.display = 'block';
+  try {
+    await reloadAll();
+    startRealtime();
+    go('home');
+  } catch (e) {
+    setStatus(msg(e, 'Could not load data.'));
+    alert(msg(e, 'Could not load Social President. Please check your connection and try again.'));
+  }
+}
+
+/* ---------- Realtime ---------- */
+function stopRealtime() {
+  liveChannels.forEach(c => sb.removeChannel(c));
+  liveChannels = [];
+}
+function startRealtime() {
+  stopRealtime();
+  const channel = sb.channel('sp-live-' + current.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async () => {
+      await reloadAll();
+      refreshCurrentPage();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+      if ($('messages').classList.contains('active')) {
+        renderMessages();
+        if (activeChat) renderChat();
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${current.id}` }, () => {
+      if ($('notifications').classList.contains('active')) renderNotifications();
+    })
+    .subscribe();
+  liveChannels.push(channel);
+}
+
+function refreshCurrentPage() {
+  const active = document.querySelector('.page.active')?.id;
+  if (active === 'home') renderFeed();
+  if (active === 'explore') renderExplore();
+  if (active === 'profile') renderProfile();
+  if (active === 'shorts') renderShorts();
+  if (active === 'creator') renderCreator();
+}
+
+/* ---------- Navigation ---------- */
+function pauseAllShorts() {
+  document.querySelectorAll('#shortsScroller video').forEach(v => {
+    try { v.pause(); v.currentTime = 0; } catch (_) {}
+  });
+  if (shortObserver) {
+    shortObserver.disconnect();
+    shortObserver = null;
+  }
+}
+
+function go(id, button) {
+  // Always stop shorts audio when leaving the Shorts page
+  if (document.querySelector('#shorts.page.active') && id !== 'shorts') {
+    pauseAllShorts();
+  }
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  $(id)?.classList.add('active');
+
+  document.querySelectorAll('.bottom button').forEach(b => b.classList.remove('active'));
+  if (button) button.classList.add('active');
+  else document.querySelector(`.bottom button[data-page="${id}"]`)?.classList.add('active');
+
+  if (id === 'home') renderFeed();
+  if (id === 'profile') renderProfile();
+  if (id === 'shorts') renderShorts();
+  if (id === 'editProfile') fillEditProfile();
+  if (id === 'creator') renderCreator();
+  if (id === 'search') renderUsers();
+  if (id === 'explore') renderExplore();
+  if (id === 'notifications') renderNotifications();
+  if (id === 'messages') renderMessages();
+  if (id === 'history') renderHistory();
+  if (id === 'liked') renderLiked();
+  if (id === 'saved') renderSaved();
+  if (id === 'watch' && watchingId) renderWatch(watchingId);
+}
+
+/* ---------- Upload with progress ---------- */
+function updateFilePicker() {
+  const t = $('uploadType').value;
+  $('uploadFile').value = '';
+  $('uploadFile').accept = t === 'post' ? 'image/*' : 'video/*,.mp4,.mov,.webm,.3gp';
+}
+
+function showProgress(pct, text) {
+  const wrap = $('uploadProgress');
+  const fill = $('progressFill');
+  const label = $('progressText');
+  wrap.classList.add('show');
+  fill.style.width = Math.min(100, Math.max(0, pct)) + '%';
+  label.textContent = text || (Math.round(pct) + '%');
+}
+function hideProgress() {
+  $('uploadProgress').classList.remove('show');
+  $('progressFill').style.width = '0%';
+}
+
+async function uploadFileWithProgress(file, folder) {
+  const path = storagePath(file, folder);
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error('Not authenticated');
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
+
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) {
+        const pct = (e.loaded / e.total) * 100;
+        showProgress(pct, `Uploading… ${Math.round(pct)}%`);
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(path);
+      } else {
+        let errMsg = 'Upload failed';
+        try {
+          const j = JSON.parse(xhr.responseText);
+          errMsg = j.message || j.error || errMsg;
+        } catch (_) {}
+        reject(new Error(errMsg));
+      }
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+    xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+    xhr.open('POST', url);
+    xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+    xhr.setRequestHeader('x-upsert', 'false');
+    if (file.type) xhr.setRequestHeader('Content-Type', file.type);
+    xhr.send(file);
+  });
+}
+
+async function publish() {
+  const type = $('uploadType').value;
+  const file = $('uploadFile').files[0];
+  const thumb = $('uploadThumb').files[0];
+  const btn = $('publishBtn');
+
+  if (!file) return alert('Select a photo or video first.');
+  if (type === 'post' && !file.type.startsWith('image/')) return alert('Photo Post requires an image.');
+  if (type !== 'post' && !file.type.startsWith('video/')) return alert('Choose a video file.');
+  if (thumb && !thumb.type.startsWith('image/')) return alert('Thumbnail must be an image.');
+  if (file.size > 500 * 1024 * 1024) return alert('Please choose a file smaller than 500 MB.');
+  if (thumb && thumb.size > 15 * 1024 * 1024) return alert('Thumbnail must be smaller than 15 MB.');
+
+  btn.disabled = true;
+  btn.textContent = 'Publishing…';
+
+  try {
+    showProgress(0, 'Preparing…');
+    setStatus('Uploading media…');
+
+    const media_path = await uploadFileWithProgress(file, 'posts');
+    let thumbnail_path = null;
+
+    if (thumb) {
+      showProgress(0, 'Uploading thumbnail…');
+      thumbnail_path = await uploadFileWithProgress(thumb, 'thumbnails');
+    }
+
+    showProgress(95, 'Saving post…');
+    const row = {
+      user_id: current.id,
+      post_type: type,
+      title: $('uploadTitle').value.trim(),
+      description: $('uploadDesc').value.trim(),
+      tags: $('uploadTags').value.trim(),
+      media_path,
+      thumbnail_path
+    };
+
+    const { error } = await sb.from('posts').insert(row);
+    if (error) throw error;
+
+    showProgress(100, 'Done!');
+    ['uploadTitle', 'uploadDesc', 'uploadTags', 'uploadFile', 'uploadThumb'].forEach(id => $(id).value = '');
+
+    await reloadAll();
+    setStatus('Published successfully');
+    await alert('✅ Published successfully!');
+    hideProgress();
+    go('home');
+  } catch (e) {
+    hideProgress();
+    setStatus('');
+    alert('❌ ' + msg(e, 'Upload failed. Please try again.'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Publish';
+    setTimeout(() => setStatus(''), 2500);
+  }
+}
+
+/* ---------- Feed & posts ---------- */
+function postCard(p) {
+  const u = profile(p.user_id);
+  if (!u) return ''; // skip if profile missing (rare race)
+  const thumb = thumbURL(p);
+  const media = thumb
+    ? `<img class="post-media" src="${thumb}" loading="lazy" onclick="openWatch('${p.id}')">`
+    : `<div class="post-media" style="height:220px;display:grid;place-items:center;color:#fff;cursor:pointer;background:#1a2e22" onclick="openWatch('${p.id}')">▶ Tap to watch</div>`;
+
+  return `<article class="card">
+    <div class="row">
+      <img class="avatar" src="${publicUrl(u.avatar_path)}" loading="lazy">
+      <div style="flex:1">
+        <b>${safe(u.full_name)}</b>
+        <div class="muted">@${safe(u.username)}</div>
+      </div>
+      <button class="btn soft" onclick="openWatch('${p.id}')">Watch</button>
+    </div>
+    <h3 style="margin:12px 0 4px;font-size:17px">${safe(p.title || 'Untitled')}</h3>
+    <p class="muted" style="margin-bottom:4px">${safe(p.description)}</p>
+    ${media}
+    <div class="post-actions">
+      <button class="action ${liked(p) ? 'liked' : ''}" onclick="like('${p.id}')">👍 ${p.likes_count || 0}</button>
+      <button class="action" onclick="openComments('${p.id}')">💬 ${p.comments_count || 0}</button>
+      <button class="action" onclick="share('${p.id}')">↗ Share</button>
+      <span class="stat-pill">◉ ${p.views_count || 0} views</span>
+    </div>
+  </article>`;
+}
+
+function renderFeed() {
+  const list = visiblePosts().slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  $('feed').innerHTML = list.length
+    ? list.map(postCard).join('')
+    : '<div class="card empty-state"><b>No posts yet</b>Create the first Social President post!</div>';
+}
+
+/* ---------- Profile ---------- */
+function renderProfile() {
+  if (!current) return;
+  const u = profile(current.id);
+  if (!u) return;
+
+  $('myName').textContent = u.full_name;
+  $('myHandle').textContent = '@' + u.username;
+  $('myBio').textContent = u.bio || '';
+  $('myAvatar').src = publicUrl(u.avatar_path);
+  $('myBanner').style.backgroundImage = u.banner_path ? `url("${publicUrl(u.banner_path)}")` : '';
+
+  const mine = visiblePosts().filter(p => p.user_id === current.id);
+  $('postCount').textContent = mine.length;
+  $('followerCount').textContent = profiles.filter(x => x.is_followed_by_me_list?.includes(current.id)).length;
+  $('followingCount').textContent = u.my_following_list?.length || 0;
+
+  $('myGrid').innerHTML = mine.length
+    ? mine.map(p => `<div class="grid-tile" onclick="openWatch('${p.id}')">${thumbURL(p) ? `<img src="${thumbURL(p)}" loading="lazy">` : '▶'}${p.post_type !== 'post' ? '<span class="tile-play">▶</span>' : ''}</div>`).join('')
+    : '<p class="muted" style="grid-column:1/-1;text-align:center;padding:20px">No uploads yet.</p>';
+}
+
+function fillEditProfile() {
+  const u = profile(current.id);
+  $('editName').value = u.full_name || '';
+  $('editUsername').value = u.username || '';
+  $('editUsername').disabled = true;
+  $('editUsername').title = 'Username cannot be changed';
+  $('editBio').value = u.bio || '';
+  $('editAvatar').value = '';
+  $('editBanner').value = '';
+}
+
+async function saveProfile() {
+  try {
+    const username = profile(current.id).username;
+    const patch = {
+      full_name: $('editName').value.trim(),
+      username,
+      bio: $('editBio').value.trim()
+    };
+    const a = $('editAvatar').files[0];
+    const b = $('editBanner').files[0];
+    if (a) patch.avatar_path = await uploadFileWithProgress(a, 'avatars');
+    if (b) patch.banner_path = await uploadFileWithProgress(b, 'banners');
+
+    const { error } = await sb.from('profiles').update(patch).eq('id', current.id);
+    if (error) throw error;
+    await loadProfileData();
+    alert('Profile updated.');
+    go('profile');
+  } catch (e) {
+    alert(msg(e, 'Could not update profile.'));
+  }
+}
+
+/* ---------- Other profile & connections ---------- */
+function openOther(id) {
+  const u = profile(id);
+  if (!u) return;
+  const mine = visiblePosts().filter(p => p.user_id === id);
+  const following = profile(current.id)?.my_following_list || [];
+
+  $('otherProfileContent').innerHTML = `
+    <div class="card profile-card">
+      <div class="banner" style="background-image:${u.banner_path ? `url('${publicUrl(u.banner_path)}')` : ''}"></div>
+      <div class="profile-main">
+        <img class="avatar profile-avatar" src="${publicUrl(u.avatar_path)}">
+        <h2>${safe(u.full_name)}</h2>
+        <p class="muted">@${safe(u.username)}</p>
+        <p>${safe(u.bio)}</p>
+        <div class="stats">
+          <div><strong>${mine.length}</strong>Posts</div>
+          <button class="stat-button" onclick="openConnections('${id}','followers')"><strong>${profiles.filter(x => x.is_followed_by_me_list?.includes(id)).length}</strong>Followers</button>
+          <button class="stat-button" onclick="openConnections('${id}','following')"><strong>${u.my_following_list?.length || 0}</strong>Following</button>
+        </div>
+        <button class="btn primary" onclick="follow('${id}')">${following.includes(id) ? 'Following' : 'Follow'}</button>
+      </div>
+    </div>
+    <h3 style="margin:16px 0 8px">Posts</h3>
+    <div class="grid">${mine.map(p => `<div class="grid-tile" onclick="openWatch('${p.id}')">${thumbURL(p) ? `<img src="${thumbURL(p)}" loading="lazy">` : '▶'}</div>`).join('') || '<p class="muted">No posts</p>'}</div>`;
+  go('otherProfile');
+}
+
+function openConnections(id, type) {
+  connectionUserId = id;
+  connectionType = type;
+  connectionReturn = id === current.id ? 'profile' : 'otherProfile';
+  renderConnections();
+  go('connections');
+}
+function backFromConnections() {
+  connectionReturn === 'otherProfile' ? openOther(connectionUserId) : go('profile');
+}
+
+function renderConnections() {
+  const target = profile(connectionUserId);
+  if (!target) return;
+  const rows = profiles.filter(u =>
+    connectionType === 'followers'
+      ? u.is_followed_by_me_list?.includes(connectionUserId)
+      : target.my_following_list?.includes(u.id)
+  );
+  $('connectionsTitle').textContent = connectionType === 'followers' ? 'Followers' : 'Following';
+  $('connectionsSubtitle').textContent = '@' + target.username + ' · ' + rows.length;
+  $('connectionsList').innerHTML = rows.length
+    ? rows.map(u => `
+      <div class="user-row">
+        <img class="avatar" src="${publicUrl(u.avatar_path)}">
+        <div class="user-row-info" onclick="openOther('${u.id}')">
+          <b>${safe(u.full_name)}</b>
+          <small>@${safe(u.username)}</small>
+        </div>
+        ${u.id === current.id ? '' : `<button class="btn ${profile(current.id).my_following_list?.includes(u.id) ? 'soft' : 'primary'}" onclick="follow('${u.id}');renderConnections()">${profile(current.id).my_following_list?.includes(u.id) ? 'Following' : 'Follow'}</button>`}
+      </div>`).join('')
+    : '<p class="muted">No users here yet.</p>';
+}
+
+async function follow(id) {
+  if (id === current.id) return;
+  const exists = profile(current.id).my_following_list?.includes(id);
+  try {
+    const q = exists
+      ? sb.from('follows').delete().eq('follower_id', current.id).eq('following_id', id)
+      : sb.from('follows').insert({ follower_id: current.id, following_id: id });
+    const { error } = await q;
+    if (error && error.code !== '23505') throw error;
+    if (!exists) await sendNotification(id, 'started following you');
+    await loadProfileData();
+    if ($('profile').classList.contains('active')) renderProfile();
+    if ($('otherProfile').classList.contains('active')) openOther(id);
+    if ($('connections').classList.contains('active')) renderConnections();
+    if ($('watch').classList.contains('active')) renderWatch(watchingId);
+  } catch (e) {
+    alert(msg(e, 'Could not update follow.'));
+  }
+}
+
+/* ---------- Watch ---------- */
+function openWatch(id) {
+  watchingId = id;
+  go('watch');
+}
+
+async function recordView(p) {
+  try {
+    await sb.from('post_views').upsert(
+      { post_id: p.id, user_id: current.id },
+      { onConflict: 'post_id,user_id', ignoreDuplicates: true }
+    );
+    await sb.from('watch_history').upsert(
+      { post_id: p.id, user_id: current.id, viewed_at: new Date().toISOString() },
+      { onConflict: 'post_id,user_id' }
+    );
+    p.views_count = (p.views_count || 0) + 1;
+  } catch (e) { console.warn(e); }
+}
+
+async function renderWatch(id) {
+  const p = post(id);
+  if (!p) { go('home'); return; }
+  const u = profile(p.user_id);
+  if (!u) return;
+
+  const src = mediaURL(p);
+  $('watchVideoWrap').innerHTML = p.post_type === 'post'
+    ? `<img class="watch-video" src="${src}">`
+    : `<video class="watch-video" src="${src}" controls playsinline preload="metadata"></video>`;
+
+  $('watchTitle').textContent = p.title || 'Untitled';
+  $('watchMeta').textContent = `${p.views_count || 0} views · ${new Date(p.created_at).toLocaleDateString()}`;
+  $('watchAvatar').src = publicUrl(u.avatar_path);
+  $('watchName').textContent = u.full_name;
+  $('watchHandle').textContent = '@' + u.username;
+  $('watchFollow').style.display = p.user_id === current.id ? 'none' : 'inline-block';
+  $('watchFollow').textContent = profile(current.id).my_following_list?.includes(u.id) ? 'Following' : 'Follow';
+  $('watchLikeCount').textContent = p.likes_count || 0;
+  $('watchLike').classList.toggle('liked', liked(p));
+  $('watchCommentCount').textContent = p.comments_count || 0;
+  $('watchCommentInput').value = '';
+
+  const { data: cs } = await sb.from('comments')
+    .select('body,user_id,created_at,profiles(username)')
+    .eq('post_id', p.id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  $('watchCommentPreview').textContent = cs?.length
+    ? `@${cs[0].profiles?.username || 'user'}: ${cs[0].body}`
+    : 'Be the first to comment.';
+
+  if (p.post_type !== 'post') {
+    const v = $('watchVideoWrap').querySelector('video');
+    if (v) v.addEventListener('play', () => recordView(p), { once: true });
+  } else {
+    recordView(p);
+  }
+
+  const rec = visiblePosts().filter(x => x.id !== id).slice(0, 12);
+  $('recommendations').innerHTML = rec.length
+    ? rec.map(x => `
+      <div class="recommend" onclick="openWatch('${x.id}')">
+        ${thumbURL(x) ? `<img src="${thumbURL(x)}" loading="lazy">` : '<div style="width:128px;height:76px;background:#dde8e1;border-radius:10px;display:grid;place-items:center">▶</div>'}
+        <div class="rec-text">
+          <b>${safe(x.title || 'Untitled')}</b>
+          <small>@${safe(profile(x.user_id)?.username || 'user')} · ${x.views_count || 0} views</small>
+        </div>
+      </div>`).join('')
+    : '<p class="muted">No more videos yet.</p>';
+}
+
+/* ---------- Like ---------- */
+async function like(id) {
+  const p = post(id);
+  if (!p) return;
+
+  // For videos/shorts require play first (except already playing)
+  if (p.post_type !== 'post') {
+    const v = $('watchVideoWrap')?.querySelector('video');
+    const s = document.querySelector(`.short-card[data-id="${id}"] video`);
+    const isPlaying = (watchingId === id && v && !v.paused) || (s && !s.paused);
+    if (!isPlaying) return alert('Play the video first, then like it.');
+  }
+
+  try {
+    const exists = liked(p);
+    const q = exists
+      ? sb.from('likes').delete().eq('post_id', id).eq('user_id', current.id)
+      : sb.from('likes').insert({ post_id: id, user_id: current.id });
+    const { error } = await q;
+    if (error && error.code !== '23505') throw error;
+
+    p.my_liked = !exists;
+    p.likes_count = Math.max(0, (p.likes_count || 0) + (exists ? -1 : 1));
+
+    if (!exists && p.user_id !== current.id) {
+      await sendNotification(p.user_id, 'liked your post or video');
+    }
+
+    refreshCurrentPage();
+    if (watchingId === id) {
+      $('watchLikeCount').textContent = p.likes_count;
+      $('watchLike').classList.toggle('liked', p.my_liked);
+    }
+    // Update short like count if present
+    const shortCount = document.querySelector(`.short-card[data-id="${id}"] .short-like-count`);
+    if (shortCount) shortCount.textContent = p.likes_count || 0;
+    const shortBtn = document.querySelector(`.short-card[data-id="${id}"] .short-like`);
+    if (shortBtn) shortBtn.classList.toggle('liked', p.my_liked);
+  } catch (e) {
+    alert(msg(e, 'Could not update like.'));
+  }
+}
+function likeFromWatch() { if (watchingId) like(watchingId); }
+function toggleWatchFollow() {
+  const p = post(watchingId);
+  if (p) follow(p.user_id);
+}
+
+/* ---------- Shorts (always with sound) ---------- */
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  // Create a silent audio context unlock if needed
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch (_) {}
+}
+
+// Unlock on any user gesture
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+});
+
+function renderShorts() {
+  const list = visiblePosts().filter(p => p.post_type === 'short').slice().reverse();
+  const scroller = $('shortsScroller');
+
+  if (!list.length) {
+    scroller.innerHTML = '<div style="color:#fff;padding:40px 20px;text-align:center"><b style="font-size:18px">No Shorts yet</b><br><span style="opacity:.7">Upload your first Short!</span></div>';
+    return;
+  }
+
+  scroller.innerHTML = list.map(p => {
+    const u = profile(p.user_id);
+    return `
+      <div class="short-card" data-id="${p.id}">
+        <video src="${mediaURL(p)}" playsinline webkit-playsinline preload="metadata" loop></video>
+        <div class="short-caption">
+          <b>@${safe(u?.username || 'user')}</b>
+          <h3>${safe(p.title || 'Short')}</h3>
+          <p>${safe(p.description)}</p>
+          <small>${safe(p.tags)}</small>
+        </div>
+        <div class="short-rail">
+          <button class="short-like ${liked(p) ? 'liked' : ''}" onclick="like('${p.id}')">👍</button>
+          <small class="short-like-count">${p.likes_count || 0}</small>
+          <button onclick="openComments('${p.id}')">💬</button>
+          <small>${p.comments_count || 0}</small>
+          <button onclick="follow('${p.user_id}')">＋</button>
+          <small>Follow</small>
+          <button onclick="share('${p.id}')">↗</button>
+          <small>Share</small>
+          <small>◉ ${p.views_count || 0}</small>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Clean previous observer
+  if (shortObserver) {
+    shortObserver.disconnect();
+    shortObserver = null;
+  }
+
+  shortObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const card = entry.target;
+      const v = card.querySelector('video');
+      const p = post(card.dataset.id);
+      if (!v) return;
+
+      if (entry.isIntersecting && entry.intersectionRatio >= 0.65) {
+        // Play with sound (TikTok style)
+        v.muted = false;
+        v.volume = 1;
+        const playPromise = v.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            // Browser blocked unmuted autoplay – fall back to muted then try unmute
+            v.muted = true;
+            v.play().then(() => {
+              // After successful muted play, try to unmute
+              setTimeout(() => {
+                v.muted = false;
+              }, 200);
+            }).catch(() => {});
+          });
+        }
+        if (p) recordView(p);
+      } else {
+        v.pause();
+      }
+    });
+  }, { root: scroller, threshold: [0.2, 0.65, 0.9] });
+
+  scroller.querySelectorAll('.short-card').forEach(card => {
+    shortObserver.observe(card);
+    const v = card.querySelector('video');
+    // Tap to toggle mute (still available)
+    v.addEventListener('click', () => {
+      v.muted = !v.muted;
+      if (v.paused) v.play().catch(() => {});
+    });
+  });
+}
+
+/* ---------- Notifications, share, save, comments ---------- */
+async function sendNotification(to, message) {
+  if (to === current.id) return;
+  const { error } = await sb.from('notifications').insert({
+    recipient_id: to,
+    actor_id: current.id,
+    message
+  });
+  if (error) console.warn(error);
+}
+
+async function share(id) {
+  const p = post(id);
+  try {
+    const text = `Social President: ${p?.title || 'Check this out'}`;
+    if (navigator.share) await navigator.share({ title: 'Social President', text });
+    else {
+      await navigator.clipboard.writeText(text);
+      alert('Copied to clipboard');
+    }
+  } catch (e) {}
+}
+
+async function save(id) {
+  const { data } = await sb.from('saved_posts')
+    .select('post_id')
+    .eq('user_id', current.id)
+    .eq('post_id', id)
+    .maybeSingle();
+
+  if (data) {
+    const { error } = await sb.from('saved_posts').delete().eq('user_id', current.id).eq('post_id', id);
+    if (error) return alert(msg(error));
+    alert('Removed from saved');
+  } else {
+    const { error } = await sb.from('saved_posts').insert({ user_id: current.id, post_id: id });
+    if (error) return alert(msg(error));
+    alert('Saved successfully');
+  }
+}
+
+async function watchMenu() {
+  const p = post(watchingId);
+  if (!p || p.user_id !== current.id) return;
+  const choice = await askPrompt('1 Edit title and description\n2 Delete this upload');
+  if (choice === '1') {
+    const title = await askPrompt('Title', p.title || '');
+    if (title === null) return;
+    const description = await askPrompt('Description', p.description || '');
+    if (description === null) return;
+    const { error } = await sb.from('posts').update({ title, description }).eq('id', p.id);
+    if (error) return alert(msg(error));
+    await reloadAll();
+    renderWatch(p.id);
+  } else if (choice === '2' && await askConfirm('Delete this upload?')) {
+    const { error } = await sb.from('posts').update({ deleted: true }).eq('id', p.id);
+    if (error) return alert(msg(error));
+    await reloadAll();
+    go('profile');
+  }
+}
+
+async function openComments(id) {
+  commentTarget = id;
+  await renderComments();
+  $('commentsModal').classList.add('show');
+}
+function closeComments() {
+  $('commentsModal').classList.remove('show');
+}
+
+async function renderComments() {
+  const { data, error } = await sb.from('comments')
+    .select('id,body,user_id,created_at,profiles(username)')
+    .eq('post_id', commentTarget)
+    .order('created_at', { ascending: true });
+  if (error) return alert(msg(error));
+  $('commentsList').innerHTML = (data || []).length
+    ? data.map(c => `<div class="item"><b>@${safe(c.profiles?.username || 'user')}</b><p style="margin:5px 0 0">${safe(c.body)}</p></div>`).join('')
+    : '<p class="muted">No comments yet.</p>';
+}
+
+async function sendComment() {
+  const body = $('commentInput').value.trim();
+  if (!body) return;
+  const { error } = await sb.from('comments').insert({
+    post_id: commentTarget,
+    user_id: current.id,
+    body
+  });
+  if (error) return alert(msg(error));
+  $('commentInput').value = '';
+  const p = post(commentTarget);
+  if (p) p.comments_count = (p.comments_count || 0) + 1;
+  await renderComments();
+  if (watchingId === commentTarget) {
+    $('watchCommentCount').textContent = p.comments_count;
+  }
+  if (p && p.user_id !== current.id) {
+    await sendNotification(p.user_id, 'commented on your post');
+  }
+}
+
+async function commentFromWatch() {
+  const body = $('watchCommentInput').value.trim();
+  if (!body || !watchingId) return;
+  commentTarget = watchingId;
+  $('commentInput').value = body;
+  await sendComment();
+  $('watchCommentInput').value = '';
+}
+
+/* ---------- Creator, search, explore ---------- */
+async function renderCreator() {
+  const own = visiblePosts().filter(p => p.user_id === current.id);
+  $('creatorViews').textContent = own.reduce((n, p) => n + (p.views_count || 0), 0);
+  $('creatorLikes').textContent = own.reduce((n, p) => n + (p.likes_count || 0), 0);
+  $('creatorComments').textContent = own.reduce((n, p) => n + (p.comments_count || 0), 0);
+  $('creatorList').innerHTML = own.length
+    ? own.map(p => `
+      <div class="item">
+        <b>${safe(p.title || 'Untitled')}</b>
+        <p class="muted">${p.post_type} · ${p.views_count || 0} views · ${p.likes_count || 0} likes</p>
+        <button class="btn soft" onclick="openWatch('${p.id}')">Open</button>
+        <button class="btn danger" onclick="deleteOwn('${p.id}')">Delete</button>
+      </div>`).join('')
+    : '<p class="muted">No uploads yet.</p>';
+}
+
+async function deleteOwn(id) {
+  if (!await askConfirm('Delete this upload?')) return;
+  const { error } = await sb.from('posts').update({ deleted: true }).eq('id', id);
+  if (error) return alert(msg(error));
+  await reloadAll();
+  renderCreator();
+}
+
+function renderUsers() {
+  const q = ($('userQuery').value || '').toLowerCase();
+  $('userResults').innerHTML = profiles
+    .filter(u => u.id !== current.id && (u.username.includes(q) || (u.full_name || '').toLowerCase().includes(q)))
+    .map(u => `
+      <div class="item row">
+        <img class="avatar" src="${publicUrl(u.avatar_path)}">
+        <div style="flex:1">
+          <b>${safe(u.full_name)}</b>
+          <div class="muted">@${safe(u.username)}</div>
+        </div>
+        <button class="btn soft" onclick="openOther('${u.id}')">View</button>
+      </div>`).join('') || '<p class="muted">No users found.</p>';
+}
+
+function renderExplore() {
+  const q = ($('exploreQuery').value || '').toLowerCase();
+  const filtered = visiblePosts().filter(p =>
+    (p.title || '').toLowerCase().includes(q) ||
+    (p.tags || '').toLowerCase().includes(q) ||
+    (p.description || '').toLowerCase().includes(q)
+  );
+  $('exploreResults').innerHTML = filtered.length
+    ? filtered.map(postCard).join('')
+    : '<p class="muted">No matching content.</p>';
+}
+
+/* ---------- Notifications & Messages ---------- */
+async function renderNotifications() {
+  const { data, error } = await sb.from('notifications')
+    .select('id,message,created_at,actor_id,profiles!notifications_actor_id_fkey(username)')
+    .eq('recipient_id', current.id)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) return alert(msg(error));
+  $('notificationList').innerHTML = (data || []).length
+    ? data.map(n => `
+      <div class="item">
+        @${safe(n.profiles?.username || 'user')} ${safe(n.message)}
+        <div class="muted">${new Date(n.created_at).toLocaleString()}</div>
+      </div>`).join('')
+    : '<p class="muted">No notifications yet.</p>';
+}
+
+async function renderMessages() {
+  $('messageUsers').innerHTML = profiles
+    .filter(u => u.id !== current.id)
+    .map(u => `
+      <div class="item row" onclick="openChat('${u.id}')">
+        <img class="avatar" src="${publicUrl(u.avatar_path)}">
+        <div style="flex:1">
+          <b>${safe(u.full_name)}</b>
+          <div class="muted">@${safe(u.username)}</div>
+        </div>
+        <button class="btn soft">Message</button>
+      </div>`).join('') || '<p class="muted">No other users yet.</p>';
+}
+
+async function openChat(id) {
+  activeChat = id;
+  $('chatBox').style.display = 'block';
+  $('chatTitle').textContent = '@' + (profile(id)?.username || 'user');
+  await renderChat();
+}
+
+async function renderChat() {
+  const { data, error } = await sb.from('messages')
+    .select('*')
+    .or(`and(sender_id.eq.${current.id},recipient_id.eq.${activeChat}),and(sender_id.eq.${activeChat},recipient_id.eq.${current.id})`)
+    .order('created_at', { ascending: true });
+  if (error) return alert(msg(error));
+  $('chatMessages').innerHTML = (data || []).length
+    ? data.map(m => `<div class="item">${m.sender_id === current.id ? 'You' : safe(profile(m.sender_id)?.username || 'User')}: ${safe(m.body)}</div>`).join('')
+    : '<p class="muted">Say hello!</p>';
+}
+
+async function sendMessage() {
+  const body = $('chatText').value.trim();
+  if (!body || !activeChat) return;
+  const { error } = await sb.from('messages').insert({
+    sender_id: current.id,
+    recipient_id: activeChat,
+    body
+  });
+  if (error) return alert(msg(error));
+  $('chatText').value = '';
+  await renderChat();
+}
+
+/* ---------- History / Liked / Saved ---------- */
+async function renderHistory() {
+  const { data, error } = await sb.from('watch_history')
+    .select('post_id,posts(*)')
+    .eq('user_id', current.id)
+    .order('viewed_at', { ascending: false });
+  if (error) return alert(msg(error));
+  $('historyList').innerHTML = (data || [])
+    .map(x => x.posts && !x.posts.deleted
+      ? `<div class="item" onclick="openWatch('${x.post_id}')">${safe(x.posts.title || 'Untitled')}</div>`
+      : '').join('') || '<p class="muted">No watch history.</p>';
+}
+
+async function renderLiked() {
+  const { data, error } = await sb.from('likes')
+    .select('post_id,posts(*)')
+    .eq('user_id', current.id)
+    .order('created_at', { ascending: false });
+  if (error) return alert(msg(error));
+  $('likedList').innerHTML = (data || [])
+    .map(x => x.posts && !x.posts.deleted
+      ? `<div class="item" onclick="openWatch('${x.post_id}')">${safe(x.posts.title || 'Untitled')}</div>`
+      : '').join('') || '<p class="muted">No liked content.</p>';
+}
+
+async function renderSaved() {
+  const { data, error } = await sb.from('saved_posts')
+    .select('post_id,posts(*)')
+    .eq('user_id', current.id)
+    .order('created_at', { ascending: false });
+  if (error) return alert(msg(error));
+  $('savedList').innerHTML = (data || [])
+    .map(x => x.posts && !x.posts.deleted
+      ? `<div class="item" onclick="openWatch('${x.post_id}')">${safe(x.posts.title || 'Untitled')}</div>`
+      : '').join('') || '<p class="muted">No saved content.</p>';
+}
+
+/* ---------- Boot ---------- */
+async function boot() {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      current = session.user;
+      await loadApp();
+    }
+    sb.auth.onAuthStateChange(async (_event, session) => {
+      if (!session && current) {
+        current = null;
+        stopRealtime();
+        pauseAllShorts();
+        $('app').style.display = 'none';
+        $('appHeader').style.display = 'none';
+        $('auth').style.display = 'block';
+      }
+    });
+  } catch (e) {
+    setStatus(msg(e, 'Connection failed.'));
+  }
+}
+boot();
+
+/* Keep feed fresh when user returns */
+let lastAutoRefresh = 0;
+async function refreshOnReturn() {
+  if (!current || document.visibilityState === 'hidden') return;
+  const now = Date.now();
+  if (now - lastAutoRefresh < 12000) return;
+  lastAutoRefresh = now;
+  try {
+    await reloadAll();
+    refreshCurrentPage();
+  } catch (e) {
+    console.warn('Background refresh failed:', e);
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') refreshOnReturn();
+});
+window.addEventListener('online', refreshOnReturn);
+window.addEventListener('pageshow', e => { if (e.persisted) refreshOnReturn(); });
+</script>
+</body>
+</html>
